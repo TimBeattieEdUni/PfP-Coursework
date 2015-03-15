@@ -1,0 +1,11 @@
+# MSc HPC
+# Performance Programming
+# Coursework
+#
+# Git ignore list for directory "Test".
+
+# Objects
+*.o
+
+# The executable
+diff-output
