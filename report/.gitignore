@@ -1,0 +1,14 @@
+# MSc HPC
+# Performance Programming
+# Coursework
+# Exam no. B063622
+#
+# Git ignore list for directory "report".
+#
+
+# Output from pdflatex.
+*.aux
+*.log
+*.toc
+*.tex.backup
+*.pdf
