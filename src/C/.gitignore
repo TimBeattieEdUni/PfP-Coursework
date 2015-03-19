@@ -10,3 +10,5 @@
 # The executable
 MD
 
+# Output from the executable
+output.dat*
