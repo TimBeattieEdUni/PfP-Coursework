@@ -9,3 +9,6 @@
 
 # The executable
 MD
+
+# Batch output
+*.sge.*
