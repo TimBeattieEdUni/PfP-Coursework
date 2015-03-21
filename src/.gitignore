@@ -6,3 +6,12 @@
 
 # Batch output
 *.sge.*
+
+# Position output
+output.*
+
+# Program output
+*.log
+
+# Profiler output
+gmon.out
