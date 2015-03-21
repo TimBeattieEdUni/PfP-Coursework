@@ -13,27 +13,50 @@
 #              graphs of results.  (not implemented yet)
 #
 
+
+##############################################################################
+#  Running collection of things to clean up.
+MESS :=
+
+
+##############################################################################
+#  Executables.
+BIN     := MD
+PROFBIN := MD-prof
+
+MESS += $(BIN) $(PROFBIN)
+
+
+##############################################################################
+#  C source code and generated files.
 SRC=MD.c control.c util.c 
 OBJ=$(SRC:.c=.o)
-CC=pgcc
+
+MESS += $(OBJ)
 
 
-CFLAGS= -g -pg
+##############################################################################
+#  C compiler and flags.
+CC := pgcc
+CFLAGS := -g
 
 
-all: MD
+##############################################################################
+#  Targets.
+default: all
 
-MD: $(OBJ)
-	$(CC) $(CFLAGS)  -o $@  $(OBJ) -lm
+all: $(BIN) $(PROFBIN)
 
+$(BIN): $(OBJ)
+	$(CC) $(CFLAGS) -o $@ $(OBJ) -lm
+
+$(PROFBIN): $(OBJ)
+	$(CC) $(CFLAGS) -pg -o $@ $(OBJ) -lm
 
 output.dat: MD input.dat
 	./MD
 
-
 clean:
-	rm -f MD $(OBJ) 
+	rm -f $(MESS)
 
 $(OBJ) : coord.h Makefile
-
-

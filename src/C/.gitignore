@@ -7,8 +7,9 @@
 # Objects
 *.o
 
-# The executable
+# Executables
 MD
+MD-prof
 
 # Output from the executable
 output.dat*
