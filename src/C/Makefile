@@ -13,26 +13,41 @@
 #              graphs of results.  (not implemented yet)
 #
 
+MESS :=
+
+BIN     := MD
+PROFBIN := MD-profiling
+
+MESS += $(BIN) $(PROFBIN)
+
 SRC=MD.c control.c util.c 
+
 OBJ=$(SRC:.c=.o)
-CC=pgcc
 
+MESS += $(OBJ)
 
-CFLAGS= -g -pg
+CC := pgcc
 
+CFLAGS :=
+$(BIN):      CFLAGS := -g
+$(PROFBIN):  CFLAGS := -g -pg
 
-all: MD
+default: all
 
-MD: $(OBJ)
-	$(CC) $(CFLAGS)  -o $@  $(OBJ) -lm
+all: $(BIN) $(PROFBIN)
+
+$(BIN): $(OBJ)
+	$(CC) $(CFLAGS) -o $@ $(OBJ) -lm
+
+$(PROFBIN): $(OBJ)
+	$(CC) $(CFLAGS) -o $@ $(OBJ) -lm
 
 
 output.dat: MD input.dat
 	./MD
 
-
 clean:
-	rm -f MD $(OBJ) 
+	rm -f $(MESS)
 
 $(OBJ) : coord.h Makefile
 
