@@ -15,4 +15,4 @@ output.*
 
 # Profiler output
 gmon.out
-*.profile
+./*.profile
