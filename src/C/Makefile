@@ -7,28 +7,28 @@
 # Makefile for MD program.
 #
 # Targets:
-#    default:  MD
-#    MD        Builds the MD program.
-#    perf      Builds several versions with varying compiler flags and creates 
-#              graphs of results.  (not implemented yet)
+#   default:  MD
+#   MD        Builds the MD program.
 #
 
 
 ##############################################################################
-#  Running collection of things to clean up.
+# Running collection of things to clean up.
+#
 MESS :=
 
 
 ##############################################################################
-#  Executables.
+# Executables.
+#
 BIN     := MD
-PROFBIN := MD-prof
 
-MESS += $(BIN) $(PROFBIN)
+MESS += $(BIN)
 
 
 ##############################################################################
-#  C source code and generated files.
+# C source code and generated files.
+#
 SRC=MD.c control.c util.c 
 OBJ=$(SRC:.c=.o)
 
@@ -36,22 +36,22 @@ MESS += $(OBJ)
 
 
 ##############################################################################
-#  C compiler and flags.
+# C compiler and flags.
+#
 CC := pgcc
 CFLAGS := -g
 
+$(PROFBIN): CFLAGS += -pg
+
 
 ##############################################################################
-#  Targets.
-default: all
-
-all: $(BIN) $(PROFBIN)
+# Targets.  Note: "make clean" is required when switching between profiling 
+# and regular builds.
+#
+default: $(BIN)
 
 $(BIN): $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $(OBJ) -lm
-
-$(PROFBIN): $(OBJ)
-	$(CC) $(CFLAGS) -pg -o $@ $(OBJ) -lm
 
 output.dat: MD input.dat
 	./MD
