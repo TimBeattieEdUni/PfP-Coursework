@@ -4,4 +4,4 @@
 #$ -pe mpi 64
 #$ -cwd
 cd C
-./MD > morar.log
+(time ./MD) 2>&1
