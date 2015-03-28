@@ -6,6 +6,7 @@
  */
 #include <stdio.h>
 #include <math.h>
+#include <float.h>
 
 #define  Nbody 4*1024
 
@@ -14,6 +15,12 @@
 
 double error(double v1, double v2)
 {
+	//  check for invalid values and return a value greater than any reasonable maximum delta
+	if (isnan(v1) || isnan(v2))
+	{
+		return DBL_MAX;
+	}
+
 	double diff = fabs(v1 - v2);
 	double sum = fabs(v1 + v2);
 	if (sum != 0.0)
