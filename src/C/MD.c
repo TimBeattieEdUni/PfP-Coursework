@@ -115,16 +115,18 @@ void evolve(int count, double dt)
 				for (l = 0; l < Ndim; l++)
 				{
 					double Gmm = G * mass[i] * mass[j];
+					double gforce = force(Gmm, delta_pos[l][k], delta_r[k]);
+					
 					/*  flip force if close in */
 					if (delta_r[k] >= Size)
 					{
-						f[l][i] = f[l][i] - force(Gmm, delta_pos[l][k], delta_r[k]);
-						f[l][j] = f[l][j] + force(Gmm, delta_pos[l][k], delta_r[k]);
+						f[l][i] = f[l][i] - gforce;
+						f[l][j] = f[l][j] + gforce;
 					}
 					else
 					{
-						f[l][i] = f[l][i] + force(Gmm, delta_pos[l][k], delta_r[k]);
-						f[l][j] = f[l][j] - force(Gmm, delta_pos[l][k], delta_r[k]);
+						f[l][i] = f[l][i] + gforce;
+						f[l][j] = f[l][j] - gforce;
 						collided = 1;
 					}
 				}
