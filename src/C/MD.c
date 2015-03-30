@@ -26,9 +26,6 @@ double force(double W, double delta, double r);
 void wind_force(int N, double* f, double* visc, double vel);
 
 
-
-
-
 void evolve(int count, double dt)
 {
 	int  step;
@@ -110,13 +107,16 @@ void evolve(int count, double dt)
 		{
 			for (j = i + 1; j < Nbody; j++)
 			{
-				//  flip force if close in - without branching within the inner loop
+				/*  
+				 * flip force if close in - without branching within the inner loop 
+				 */
 				double multiplier = 1.0;
 				if (! (delta_r[k] >= Size))
 				{
 					multiplier = -1.0;
 					collisions++;
 				}
+
 				for (l = 0; l < Ndim; l++)
 				{
 					double Gmm = G * mass[i] * mass[j];
@@ -139,17 +139,14 @@ void evolve(int count, double dt)
 		}
 
 		/* update velocities */
-		for (i = 0; i < Nbody; i++)
+		for (j = 0; j < Ndim; j++)
 		{
-			for (j = 0; j < Ndim; j++)
+			for (i = 0; i < Nbody; i++)
 			{
 				vel[j][i] = vel[j][i] + dt * (f[j][i] / mass[i]);
 			}
 		}
-
-
 	}
-
 }
 
 
