@@ -19,4 +19,4 @@ gmon.out
 
 # Compiler output
 *.oo
-
+*.dSYM
