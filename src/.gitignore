@@ -16,3 +16,7 @@ output.*
 # Profiler output
 gmon.out
 ./*.profile
+
+# Compiler output
+*.oo
+
