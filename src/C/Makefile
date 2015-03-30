@@ -29,7 +29,7 @@ MESS += $(BIN)
 ##############################################################################
 # C source code and generated files.
 #
-SRC=MD.c control.c util.c 
+SRC=MD.c control.c util.c
 OBJ=$(SRC:.c=.o)
 
 MESS += $(OBJ)
@@ -39,13 +39,13 @@ MESS += $(OBJ)
 # C compiler and flags.
 #
 CC := pgcc
-CFLAGS := -g
+CFLAGS := -fast -Mipa=fast,inline
 
 $(PROFBIN): CFLAGS += -pg
 
 
 ##############################################################################
-# Targets.  Note: "make clean" is required when switching between profiling 
+# Targets.  Note: "make clean" is required when switching between profiling
 # and regular builds.
 #
 default: $(BIN)
