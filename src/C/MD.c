@@ -110,28 +110,20 @@ void evolve(int count, double dt)
 		{
 			for (j = i + 1; j < Nbody; j++)
 			{
-				collided = 0;
+				//  flip force if close in - without branching within the inner loop
+				double multiplier = 1.0;
+				if (! (delta_r[k] >= Size))
+				{
+					multiplier = -1.0;
+					collisions++;
+				}
 				for (l = 0; l < Ndim; l++)
 				{
 					double Gmm = G * mass[i] * mass[j];
 					double gforce = force(Gmm, delta_pos[l][k], delta_r[k]);
 					
-					/*  flip force if close in */
-					if (delta_r[k] >= Size)
-					{
-						f[l][i] = f[l][i] - gforce;
-						f[l][j] = f[l][j] + gforce;
-					}
-					else
-					{
-						f[l][i] = f[l][i] + gforce;
-						f[l][j] = f[l][j] - gforce;
-						collided = 1;
-					}
-				}
-				if (collided == 1)
-				{
-					collisions++;
+					f[l][i] = f[l][i] - multiplier * gforce;
+					f[l][j] = f[l][j] + multiplier * gforce;
 				}
 				k = k + 1;
 			}
