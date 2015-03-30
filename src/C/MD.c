@@ -67,12 +67,11 @@ void evolve(int count, double dt)
 			r[k] = sqrt(r[k]);
 		}
 		/* calculate central force */
-		for (i = 0; i < Nbody; i++)
+		for (l = 0; l < Ndim; l++)
 		{
-			for (l = 0; l < Ndim; l++)
+			for (i = 0; i < Nbody; i++)
 			{
-				f[l][i] = f[l][i] -
-				          force(G * mass[i] * M_central, pos[l][i], r[i]);
+				f[l][i] = f[l][i] - force(G * mass[i] * M_central, pos[l][i], r[i]);
 			}
 		}
 		/* calculate pairwise separation of particles */
