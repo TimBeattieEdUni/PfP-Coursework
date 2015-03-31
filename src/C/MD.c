@@ -119,9 +119,8 @@ void evolve(int count, double dt)
 
 				for (l = 0; l < Ndim; l++)
 				{
-					double Gmm = G * mass[i] * mass[j];
-					double gforce = force(Gmm, delta_pos[l][k], delta_r[k]);
-					
+					double gforce = G * mass[i] * mass[j] * delta_pos[l][k] / pow(delta_r[k], 3.0);
+
 					f[l][i] = f[l][i] - multiplier * gforce;
 					f[l][j] = f[l][j] + multiplier * gforce;
 				}
