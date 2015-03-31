@@ -41,15 +41,16 @@ void evolve(int count, double dt)
 		printf("collisions %d\n", collisions);
 
 		/* set the viscosity term in the force calculation */
-		for (j = 0; j < Ndim; j++)
-		{
-			visc_force(Nbody, f[j], visc, vel[j]);
-		}
 		/* add the wind term in the force calculation */
 		for (j = 0; j < Ndim; j++)
-		{
-			wind_force(Nbody, f[j], visc, wind[j]);
+		{		
+			int i;
+			for (i = 0; i < Nbody; i++)
+			{
+				f[j][i] = -visc[i] * (vel[j][i] + wind[j]);
+			}			
 		}
+
 		/* calculate distance from central mass */
 		for (k = 0; k < Nbody; k++)
 		{
