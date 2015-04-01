@@ -107,8 +107,10 @@ void evolve(int count, double dt)
 		for (l = 0; l < Ndim; l++)
 		{
 			k = 0;
+			double *pfli = f[l];			
 			for (i = 0; i < Nbody; i++)
 			{
+				double *pflj = &f[l][i+1];
 				for (j = i + 1; j < Nbody; j++)
 				{
 					/*  
@@ -123,11 +125,17 @@ void evolve(int count, double dt)
 					
 					double gforce = multiplier * G * mass[i] * mass[j] * delta_pos[l][k] / pow(delta_r[k], 3.0);
 					
-					f[l][i] = f[l][i] - gforce;
-					f[l][j] = f[l][j] + gforce;
+					*pfli -= gforce;
+//					f[l][i] = f[l][i] - gforce;
 					
-					k = k + 1;
+					*pflj += gforce;
+//					f[l][j] = f[l][j] + gforce;
+					
+					++k;
+					++pflj;
 				}
+				
+				++pfli;
 			}
 		}
 
@@ -135,20 +143,32 @@ void evolve(int count, double dt)
 		collisions += local_collisions / 3;
 		
 		/* update positions */
+		double *ppos = pos[0];
+		double *pvel = vel[0];		
 		for (j = 0; j < Ndim; j++)
 		{
 			for (i = 0; i < Nbody; i++)
 			{
-				pos[j][i] = pos[j][i] + dt * vel[j][i];
+				*ppos += dt * *pvel;
+				++ppos;
+				++pvel;
+//				pos[j][i] = pos[j][i] + dt * vel[j][i];
 			}
 		}
 
 		/* update velocities */
+		pvel  = vel[0];
+		double *pf    = f[0];
 		for (j = 0; j < Ndim; j++)
 		{
+			double *pmass = mass;
 			for (i = 0; i < Nbody; i++)
 			{
-				vel[j][i] = vel[j][i] + dt * (f[j][i] / mass[i]);
+				*pvel += dt * (*pf / *pmass);
+				++pvel;
+				++pf;
+				++pmass;
+//				vel[j][i] = vel[j][i] + dt * (f[j][i] / mass[i]);
 			}
 		}
 	}
