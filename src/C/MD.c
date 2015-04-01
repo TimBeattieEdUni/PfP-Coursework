@@ -129,19 +129,12 @@ void evolve(int count, double dt)
 		}
 
 		/* update positions */
-		for (j = 0; j < Ndim; j++)
-		{
-			for (i = 0; i < Nbody; i++)
-			{
-				pos[j][i] = pos[j][i] + dt * vel[j][i];
-			}
-		}
-
 		/* update velocities */
 		for (j = 0; j < Ndim; j++)
 		{
 			for (i = 0; i < Nbody; i++)
 			{
+				pos[j][i] = pos[j][i] + dt * vel[j][i];
 				vel[j][i] = vel[j][i] + dt * (f[j][i] / mass[i]);
 			}
 		}
