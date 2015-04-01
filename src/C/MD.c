@@ -119,22 +119,29 @@ void evolve(int count, double dt)
 
 				for (l = 0; l < Ndim; l++)
 				{
-					double gforce = G * mass[i] * mass[j] * delta_pos[l][k] / pow(delta_r[k], 3.0);
+					double gforce = multiplier * G * mass[i] * mass[j] * delta_pos[l][k] / pow(delta_r[k], 3.0);
 
-					f[l][i] = f[l][i] - multiplier * gforce;
-					f[l][j] = f[l][j] + multiplier * gforce;
+					f[l][i] = f[l][i] - gforce;
+					f[l][j] = f[l][j] + gforce;
 				}
 				k = k + 1;
 			}
 		}
 
 		/* update positions */
-		/* update velocities */
 		for (j = 0; j < Ndim; j++)
 		{
 			for (i = 0; i < Nbody; i++)
 			{
 				pos[j][i] = pos[j][i] + dt * vel[j][i];
+			}
+		}
+
+		/* update velocities */
+		for (j = 0; j < Ndim; j++)
+		{
+			for (i = 0; i < Nbody; i++)
+			{
 				vel[j][i] = vel[j][i] + dt * (f[j][i] / mass[i]);
 			}
 		}
