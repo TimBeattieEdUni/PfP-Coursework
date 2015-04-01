@@ -42,12 +42,24 @@ void evolve(int count, double dt)
 
 		/* set the viscosity term in the force calculation */
 		/* add the wind term in the force calculation */
+		double *pf    = f[0];
+		double *pvel  = vel[0];
+		double *pwind = wind;
+		
 		for (j = 0; j < Ndim; j++)
 		{
+			double *pvi = visc;
+			
 			for (i = 0; i < Nbody; i++)
 			{
-				f[j][i] = -visc[i] * (vel[j][i] + wind[j]);
-			}			
+				*pf = -(*pvi) * (*pvel + *pwind);
+				
+				++pvi;
+				++pf;
+				++pvel;
+			}
+			
+			++pwind;
 		}
 
 		/* calculate distance from central mass */
@@ -125,11 +137,8 @@ void evolve(int count, double dt)
 					
 					double gforce = multiplier * G * mass[i] * mass[j] * delta_pos[l][k] / pow(delta_r[k], 3.0);
 					
-					*pfli -= gforce;
-//					f[l][i] = f[l][i] - gforce;
-					
+					*pfli -= gforce;					
 					*pflj += gforce;
-//					f[l][j] = f[l][j] + gforce;
 					
 					++k;
 					++pflj;
@@ -144,7 +153,8 @@ void evolve(int count, double dt)
 		
 		/* update positions */
 		double *ppos = pos[0];
-		double *pvel = vel[0];		
+		pvel         = vel[0];
+		
 		for (j = 0; j < Ndim; j++)
 		{
 			for (i = 0; i < Nbody; i++)
@@ -152,13 +162,13 @@ void evolve(int count, double dt)
 				*ppos += dt * *pvel;
 				++ppos;
 				++pvel;
-//				pos[j][i] = pos[j][i] + dt * vel[j][i];
 			}
 		}
 
 		/* update velocities */
-		pvel  = vel[0];
-		double *pf    = f[0];
+		pvel = vel[0];
+		pf  = f[0];
+		
 		for (j = 0; j < Ndim; j++)
 		{
 			double *pmass = mass;
@@ -168,7 +178,6 @@ void evolve(int count, double dt)
 				++pvel;
 				++pf;
 				++pmass;
-//				vel[j][i] = vel[j][i] + dt * (f[j][i] / mass[i]);
 			}
 		}
 	}
