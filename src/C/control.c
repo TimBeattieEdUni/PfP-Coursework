@@ -35,17 +35,17 @@ int main(int argc, char* argv[])
 	
 	/* calculate size in doubles of 1 line of Xeon L3 cache */
 	int const cache_line = 64;
-	int const line_doubles = cache_line / sizeof(double);
+	int const pad_doubles = 2 * cache_line / sizeof(double);
 
 	/* set up multi dimensional arrays with padding*/	
-	r = calloc(Nbody + line_doubles, sizeof(double));
-	delta_r = calloc(Nbody * Nbody + line_doubles, sizeof(double));
-	mass = calloc(Nbody + line_doubles, sizeof(double));
-	visc = calloc(Nbody + line_doubles, sizeof(double));
-	f[0] = calloc(Ndim * Nbody + line_doubles, sizeof(double));
-	pos[0] = calloc(Ndim * Nbody + line_doubles, sizeof(double));
-	vel[0] = calloc(Ndim * Nbody + line_doubles, sizeof(double));
-	delta_pos[0] = calloc(Ndim * Nbody * Nbody + line_doubles, sizeof(double));
+	r = calloc(Nbody + pad_doubles, sizeof(double));
+	delta_r = calloc(Nbody * Nbody + pad_doubles, sizeof(double));
+	mass = calloc(Nbody + pad_doubles, sizeof(double));
+	visc = calloc(Nbody + pad_doubles, sizeof(double));
+	f[0] = calloc(Ndim * Nbody + pad_doubles, sizeof(double));
+	pos[0] = calloc(Ndim * Nbody + pad_doubles, sizeof(double));
+	vel[0] = calloc(Ndim * Nbody + pad_doubles, sizeof(double));
+	delta_pos[0] = calloc(Ndim * Nbody * Nbody + pad_doubles, sizeof(double));
 	for (i = 1; i < Ndim; i++)
 	{
 		f[i] = f[0] + i * Nbody;
