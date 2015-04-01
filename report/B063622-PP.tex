@@ -51,11 +51,20 @@
 \pagenumbering{arabic}  % Body of report numbered in Arabic.
 
 \section{Introduction}
-This section is the introduction.
+The following report describes the process of optimising a program which runs a molecular dynamics calculation.
+The system contains a number of particles which move under both an inverse square attraction force and a viscosity in the system.
+Several modifications to the code are described, including several which made performance worse and were discarded from the final code.
+An analysis of each modification's effects on the code's performance is also presented.
 
 \newpage
 
-\section{Another Section}
+\section{The Initial Code}
+Debug flag in makefile.
+Large arrays, powers of 2, cache lines.
+Nested for loops with fastest-moving index outermost.
+Function calls for simple calcs.
+Combinable loops.
+
 This is another section.
 
 \section{Conclusion}
