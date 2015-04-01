@@ -1,10 +1,6 @@
 #!/bin/bash
 
-# Test script
 # Verifies output from MD program
 
-Test/diff-output C/output.dat100 original-output/output.dat100
-Test/diff-output C/output.dat200 original-output/output.dat200
-Test/diff-output C/output.dat300 original-output/output.dat300
-Test/diff-output C/output.dat400 original-output/output.dat400
-Test/diff-output C/output.dat500 original-output/output.dat500
+Test/diff-output C/output.dat100 data/reference/output.dat100 > test.log
+cat test.log
