@@ -43,7 +43,7 @@ void evolve(int count, double dt)
 		/* set the viscosity term in the force calculation */
 		/* add the wind term in the force calculation */
 		for (j = 0; j < Ndim; j++)
-		{		
+		{
 			for (i = 0; i < Nbody; i++)
 			{
 				f[j][i] = -visc[i] * (vel[j][i] + wind[j]);
@@ -71,6 +71,7 @@ void evolve(int count, double dt)
 				f[l][i] = f[l][i] - force(G * mass[i] * M_central, pos[l][i], r[i]);
 			}
 		}
+
 		/* calculate pairwise separation of particles */
 		for (l = 0; l < Ndim; l++)
 		{
@@ -111,7 +112,7 @@ void evolve(int count, double dt)
 				for (j = i + 1; j < Nbody; j++)
 				{
 					/*  
-					 * flip force if close in - without branching within the inner loop 
+					 * flip force if close in
 					 */
 					double multiplier = 1.0;
 					if (! (delta_r[k] >= Size))
