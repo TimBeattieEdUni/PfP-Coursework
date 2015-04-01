@@ -54,15 +54,15 @@ void evolve(int count, double dt)
 		for (k = 0; k < Nbody; k++)
 		{
 			r[k] = 0.0;
-		}
-		for (i = 0; i < Ndim; i++)
-		{
-			add_norm(Nbody, r, pos[i]);
-		}
-		for (k = 0; k < Nbody; k++)
-		{
+
+			for (i = 0; i < Ndim; i++)
+			{
+				r[k] += (pos[i][k] * pos[i][k]);
+			}
+			
 			r[k] = sqrt(r[k]);
 		}
+
 		/* calculate central force */
 		for (l = 0; l < Ndim; l++)
 		{
