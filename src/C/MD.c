@@ -102,32 +102,37 @@ void evolve(int count, double dt)
 		/*
 		 * add pairwise forces.
 		 */
-		k = 0;
-		for (i = 0; i < Nbody; i++)
+		int local_collisions = 0;
+		for (l = 0; l < Ndim; l++)
 		{
-			for (j = i + 1; j < Nbody; j++)
+			k = 0;
+			for (i = 0; i < Nbody; i++)
 			{
-				/*  
-				 * flip force if close in - without branching within the inner loop 
-				 */
-				double multiplier = 1.0;
-				if (! (delta_r[k] >= Size))
+				for (j = i + 1; j < Nbody; j++)
 				{
-					multiplier = -1.0;
-					collisions++;
-				}
-
-				for (l = 0; l < Ndim; l++)
-				{
+					/*  
+					 * flip force if close in - without branching within the inner loop 
+					 */
+					double multiplier = 1.0;
+					if (! (delta_r[k] >= Size))
+					{
+						multiplier = -1.0;
+						local_collisions++;
+					}
+					
 					double gforce = multiplier * G * mass[i] * mass[j] * delta_pos[l][k] / pow(delta_r[k], 3.0);
-
+					
 					f[l][i] = f[l][i] - gforce;
 					f[l][j] = f[l][j] + gforce;
+					
+					k = k + 1;
 				}
-				k = k + 1;
 			}
 		}
 
+		//  this is a kludge: the modified code results in 3x as many collisions so we correct this here
+		collisions += local_collisions / 3;
+		
 		/* update positions */
 		for (j = 0; j < Ndim; j++)
 		{
