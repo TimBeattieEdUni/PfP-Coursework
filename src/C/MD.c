@@ -44,7 +44,6 @@ void evolve(int count, double dt)
 		/* add the wind term in the force calculation */
 		for (j = 0; j < Ndim; j++)
 		{		
-			int i;
 			for (i = 0; i < Nbody; i++)
 			{
 				f[j][i] = -visc[i] * (vel[j][i] + wind[j]);
