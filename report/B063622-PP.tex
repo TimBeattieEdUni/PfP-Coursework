@@ -28,7 +28,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Components.
-\title{Parallel Design Patterns Coursework Part II}
+\title{Performance Programming \\ Coursework}
 \author{B063622}
 \date{\today}
 
@@ -65,9 +65,54 @@ Nested for loops with fastest-moving index outermost.
 Function calls for simple calcs.
 Combinable loops.
 
-This is another section.
+\section{The Given Code}
+First step to examine the code as-is.
+Brief overview of initial code.
+Initial runs unmodified - (193.724736 + 193.554321 + 193.863500 + 193.568124 + 193.937730) / 5- very consistent timings at ~193.7 seconds to within 1/2 %
+Data arrays large powers of 2.
+
+\section{Testing for Correctness}
+Needed test to ensure correct mods - many mods.
+Test program compared output within a given delta.
+Didn't detect NaNs - had to add this - list code.
+Needed collisions, empirically found they started at 162 (show output), so original output at 200 used as input.
+Original program used to produce output 100 steps after 200th in input.
+
+\section{Repeatable work process}
+Modify code - small mods to isolate effects.
+Run code.
+64 cores - isolate.
+Verify output
+Measure performance - 2 runs, consistent.
+Store output data, 2 morar outputs, and output from test for each modification.
+Revert change if performance worse.
+
+\section{Initial Steps}
+First modification: remove -g flag.
+Debug symbols - increase size of code and reduces performance.
+107.066320s and 107.309783 
+Consistent timing found using 64 cores, so 2 runs enough.
+If runs varied, planned to increase number of runs.  Didn't vary.
+
+Profiling run done, but unsurprisinbly all time spent in function evolve() as it contained all the loops.  Could have separated loops into functions, but obvious candidates (3-nested fors) so worked on them.
+
+\section{Compiler optimisation flags}
+Easy initial option: try adding compiler optimisation flags  O1-4 tried as well as–fast –Mipa=fast,inline  as recommended by th PGI Compiler User Guide. \cite{ref:PgiCC}  "If you want to get started quickly with optimization, a good set of options to use with any of the PGI compilers is -fast -Mipa=fast,inline."
+O1: (only 1 run) 125.075299
+O2: 127.319100
+O3: 127.375565 127.023777
+O4: 125.678674 125.906789
+-fast -Mipa=fast,inline: 
+Found that all optimisation flags actually increased run time.  Clear that compiler optimisation not a limiting factor in current code.
+Left -fast -Mipa=fast,inline in place as expected to solve other problems - compiler optimisation flags generally make an improvement.
 
 \section{Conclusion}
 This section is the conclusion.
+
+\begin{thebibliography}{100}
+
+\bibitem{ref:PgiCC} {\em 2015 PGI Compiler User Guide} NVIDIA Corporation. pp 24-26.
+
+\end{thebibliography}
 
 \end{document}
