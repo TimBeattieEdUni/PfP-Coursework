@@ -33,6 +33,45 @@
 \date{\today}
 
 
+%
+% The following defines an environment for including source with syntax hilighting.
+% (Copied from stackoverflow.com/questions/3175105/how-to-insert-code-%into-a-latex-doc) 
+% Could be useful if we want to include source code in the report. 
+%
+% To use a different language, overwrite the language paramter in the code. I.e. write: 
+%	\lstset{language=bash}
+% before the beginning of the listing. 
+
+% Then enter your code: 
+%	\begin{lstlisting}
+%		source code here ...
+%	\end{lstlisting}
+%
+
+\usepackage{listings}
+\usepackage{color}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+language=c++,
+aboveskip=3mm,
+belowskip=3mm,
+showstringspaces=false,
+columns=flexible,
+basicstyle={\small\ttfamily},
+numbers=none,
+numberstyle=\tiny\color{gray},
+keywordstyle=\color{blue},
+commentstyle=\color{dkgreen},
+stringstyle=\color{mauve},
+breaklines=false,
+breakatwhitespace=true,   
+tabsize=3
+}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % The document itself.
 %
@@ -52,26 +91,118 @@
 
 \section{Introduction}
 The following report describes the process of optimising a program which runs a molecular dynamics calculation.
-The system contains a number of particles which move under both an inverse square attraction force and a viscosity in the system.
-Several modifications to the code are described, including several which made performance worse and were discarded from the final code.
-An analysis of each modification's effects on the code's performance is also presented.
+The calculation models a number of particles which are subject to two forces: an inverse square attraction and a viscosity in the system.
 
-\newpage
+A series of  modifications were made to the code in an attempt to optimise its performance, including several which degraded performance and which were discarded from the final code.
+The modifications these are described, and an analysis of the effect of each modification on the code's performance is presented.
 
-\section{The Initial Code}
-Debug flag in makefile.
-Large arrays, powers of 2, cache lines.
-Nested for loops with fastest-moving index outermost.
-Function calls for simple calcs.
-Combinable loops.
+The code was provided in both C and Fortran; the C version was chosen for this exercise.
 
-\section{The Given Code}
-First step to examine the code as-is.
-Brief overview of initial code.
-Initial runs unmodified - (193.724736 + 193.554321 + 193.863500 + 193.568124 + 193.937730) / 5- very consistent timings at ~193.7 seconds to within 1/2 %
+\section{First Steps}
+
+\subsection{Examining the Code}
+The first step was to study the code and its build process in order to gain an understanding of how the code worked and to identify potential modifications which might improve performance.
+Several such possibilities were initially identified in the code and its make file:
+
+\begin{itemize}
+	\item Debug symbols enabled during compilation.
+	\item Lack of compiler optimisation.
+	\item Nested for loops with slowest-changing indices innermost.
+	\item Loops which could be combined.
+	\item Repeated calculations within loops.
+	\item Loop-invariant values recalculated within loops.
+	\item Branches within loops.
+	\item Arrays sized as powers of 2.
+	\item Related data in separate structures in memory.
+	\item Multidimensional array indexing which could be converted to incrementing pointers.
+\end{itemize}
+
+
+\subsection{Recording Initial Performance}
+An initial timing run was performed with the code and makefile unmodified.
+The only change made to the provided files was to modify the Sun Grid Engine batch script {\em bench\_c.sge} to allocate 64 for cores for each run as shown in Figure~\ref{fig:batchsge}.
+This was done in order to isolate timing runs from the effects of any other programs running on the same node on MORAR.
+This setting was applied to all timing runs performed.
+
+\begin{figure}
+	\begin{lstlisting}
+		#$ -l h\_rt=:20:
+		#$ -pe mpi 64
+		#$ -cwd
+	\end{lstlisting}
+	\caption{Modification to bench\_c.sge to allocate 64 cores for timing runs.}
+	\label{fig:batchsge}
+\end{figure}
+
+The program performed five iterations of 100 steps with each step including the running count of collisions and with each set of 100 steps indicating the time taken for that set.  Times for the initial run are shown in Table~\ref{table:InitialRunTimes}.
+
+\begin{table}[h]
+	\begin{center}
+		\begin{tabular}{||l|c|l||}
+			\hline
+				{\bf Steps} & {\bf Time}\\
+			\hline
+				100  &  193.724736\\
+				200  &  193.554321\\
+				300  &  193.863500\\
+				400  &  193.568124\\
+				500  &  193.937730\\
+			\hline
+		\end{tabular}
+	\end{center}
+	\caption{Initial run times per 100 steps.}
+	\label{table:InitialRunTimes}
+\end{table}
+
+The initial timing was very consistent, resulting in an average of 1.937 seconds per step, with times for each set of 100 steps varying by less than one percent.
+For this reason, two runs of 100 steps each were considered sufficient for timing the first few modifications to the code.
+It was anticipated that times might become less consistent when the program became more efficient as interruptions for I/O would affect the program more if it were keeping the CPU busy.
+However, run times remained consistent to within approximately three percent throughout the work done, so the number of timing runs for each modification was not increased.
+
+\subsection{Testing for Correctness}
+
+The program printed the number of the current step and the running count of collisions to the standard output along with the time taken for each set of 100 steps.
+The program also wrote the positions and velocities of each particle in the system to an output file after each set.
+In order to consider the program to still be correct after a modification, both the particle data and the collision count had to be sufficiently accurate.  
+
+Perfect accuracy was not required as the order of floating point arithmetic in the code might be altered.
+A test tool was provided which compared the values in two output files and reported the maximum difference between corresponding values as well as any differences which were greater than a chosen minimum and which were therefore unacceptable.  
+
+The tool had a bug: it failed to handle NaN values correctly.
+The code which performed the comparison between values reported a difference of 0.0 between any floating point number and NaN.
+A check for NaN values was added and the code was made to indicate that the difference between any valid value and NaN, or between two NaNs, was the largest available double-precision floating point value.
+The modified code is shown in Figure~\ref{fig:NanTest}.
+
+\begin{figure}
+	\begin{lstlisting}
+		double error(double v1, double v2)
+		{
+			//  check for invalid values and return a 
+			//  value greater than any reasonable maximum delta
+			if (isnan(v1) || isnan(v2))
+			{
+				return DBL_MAX;
+			}
+
+			double diff = fabs(v1 - v2);
+			double sum = fabs(v1 + v2);
+			if (sum != 0.0)
+			{
+				// normalise
+				diff = diff / sum;
+			}
+			return diff;
+		}
+	\end{lstlisting}
+	\caption{Checking for NaN values in diff tool.}
+	\label{fig:NanTest}
+\end{figure}
+
+
+
+Initial runs unmodified - ( +  +  +  + ) / 5- very consistent timings at ~193.7 seconds to within 1/2 %
 Data arrays large powers of 2.
 
-\section{Testing for Correctness}
 Needed test to ensure correct mods - many mods.
 Test program compared output within a given delta.
 Didn't detect NaNs - had to add this - list code.
