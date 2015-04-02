@@ -134,7 +134,8 @@ This setting was applied to all timing runs performed.
 	\label{fig:batchsge}
 \end{figure}
 
-The program performed five iterations of 100 steps with each step including the running count of collisions and with each set of 100 steps indicating the time taken for that set.  Times for the initial run are shown in Table~\ref{table:InitialRunTimes}.
+The program performed five iterations of 100 steps with each step including the running count of collisions and with each set of 100 steps indicating the time taken for that set.
+Times for the initial run are shown in Table~\ref{table:InitialRunTimes}.
 
 \begin{table}[h]
 	\begin{center}
@@ -198,25 +199,37 @@ The modified code is shown in Figure~\ref{fig:NanTest}.
 	\label{fig:NanTest}
 \end{figure}
 
+\section{Test Input Data}
 
+In order to produce output which could be tested for accuracy by comparing it with output from previous runs, the set of particle starting positions and velocities provided as input to the program had to be the same for each test run.
+Additionally the program had to be run until collisions started to occur in order to verify that the collision count was correct.
+A run of 100 steps was considered sufficient for both timing and accuracy as molecular dynamics calculations are generally very sensitive to small perturbations after many iterations.  
 
-Initial runs unmodified - ( +  +  +  + ) / 5- very consistent timings at ~193.7 seconds to within 1/2 %
-Data arrays large powers of 2.
+To ensure that collision counts were correct, the input used was a set of particle positions and velocities produced by the original program at a number of steps after collisions had begun occurring.
+It was found that collisions began at 162 steps, so the positions and velocities at 200 steps, written to file output.dat200 by the first run of the program, were used as test run inputs.
+The terst run's output file output.dat100 was then compared with the file output.dat100 produced by a run of the original unmodified code with the same input.
+The program's output to stdout was compared manually to verify that the number of collisions had not changed.
 
-Needed test to ensure correct mods - many mods.
-Test program compared output within a given delta.
-Didn't detect NaNs - had to add this - list code.
-Needed collisions, empirically found they started at 162 (show output), so original output at 200 used as input.
-Original program used to produce output 100 steps after 200th in input.
+A small difference in the number of collisions would have been acceptable in the same way as small differences in particle positions and velocities.
+However, the number of collisions at 100 steps when starting with the selected input data was always 34107; this did not change throughout the exercise.
 
-\section{Repeatable work process}
-Modify code - small mods to isolate effects.
-Run code.
-64 cores - isolate.
-Verify output
-Measure performance - 2 runs, consistent.
-Store output data, 2 morar outputs, and output from test for each modification.
-Revert change if performance worse.
+\section{Work Process}
+Each modification to the program was performed in the following steps:
+
+\begin{enumerate}
+	\item The code or makefile was modified and the application built.
+	\item The program was run twice on MORAR with output.dat200 specified as its input file.
+	\item The test program was used to verify the accuracy of the ouput.
+	\item The number of collisions after 100 steps was checked for any difference with the original value.
+	\item The time for 100 steps was checked for any performance improvement.
+	\item If performance was significantly degraded by the modification, it was reverted. 
+\end{enumerate}
+
+Modifications to the code were kept small and done one at a time in order to isolate the effects of any change.
+Exceptions to this occurred when one modification enabled another - for example where a function was called within a loop and inlining the function enabled the loop to be fused with other loops.
+
+The accuracy of the final positions and velocities was verified using the test program.
+The run time for 100 steps and the accuracy of the collision count were checked manually as this did not consume significant time.
 
 \section{Initial Steps}
 First modification: remove -g flag.
