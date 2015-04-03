@@ -228,7 +228,7 @@ Each modification to the program was performed in the following steps:
 \end{enumerate}
 
 Modifications to the code were kept small and done one at a time in order to isolate the effects of any change.
-Exceptions to this occurred when one modification enabled another - for example where a function was called within a loop and inlining the function enabled the loop to be fused with other loops.
+Exceptions to this occurred when one modification enabled another,  for example where a function was called within a loop and inlining the function enabled the loop to be fused with other loops.
 
 The accuracy of the final positions and velocities was verified using the test program.
 The run time for 100 steps and the accuracy of the collision count were checked manually as this did not consume significant time.
@@ -425,7 +425,7 @@ Figure~\ref{figure:ForceMod} shows the replacement of two calls to this function
 
 Two timing runs produced times of 60.736962 and 60.985466 seconds for an average of 0.609 seconds per step.
 This represents a reduction in run time of 4\% over the previous modification and 69\% overall.
-Again, the small difference suggests this was not a major limiting factor in the code's performance.
+Again, the small difference suggests the extra function call  was not a major limiting factor in the code's performance.
 
 \subsection{Loop Swap in Calculation of Central Force}
 The next modification was a simple loop swap in the calculation of the force between each particle and the central mass.
@@ -494,7 +494,7 @@ The modification is shown in Figure~\ref{figure:CallMod} with the earlier code c
 		// after: function call inlined
 		double gforce = G * mass[i] * mass[j] * delta_pos[l][k] / pow(delta_r[k], 3.0);
 	\end{lstlisting}
-	\caption{Central force calculation with loops swapped.}
+	\caption{Pairwise force calculation with function inlined.}
 	\label{figure:CallMod}
 \end{figure}
 
@@ -521,7 +521,7 @@ A pad value was calculated in terms of the size of a double floating point numbe
 
 		// ...
 	\end{lstlisting}
-	\caption{Central force calculation with loops swapped.}
+	\caption{Array allocations including pads.}
 	\label{figure:Pad}
 \end{figure}
 
@@ -532,27 +532,122 @@ It is not clear why this occurred; little or no change would have suggested that
 As this modification reduced performance, it was discarded.
 
 \subsection{Loop Swap in Calculation of Pairwise Forces}
+The next modification was to swap loops in the calculation of forces between pairs of particles. 
+This had been identified early on as a highly probable source of cache misses and performance degradation, but the code was difficult to modify as it was optimised to reduce memory usage in the storage of pair separations in {\em delta\_r}.
+This was an example of how optimisation can reduce code maintainability; the modification was attempted several times before a correct solution was found.
+
+The resulting code is shown in Figure~\ref{figure:PairSwap}.
+
+\begin{figure}
+	\begin{lstlisting}
+		// add pairwise forces.
+		int local_collisions = 0;
+		for (l = 0; l < Ndim; l++)
+		{
+			k = 0;
+			for (i = 0; i < Nbody; i++)
+			{
+				for (j = i + 1; j < Nbody; j++)
+				{
+					/*  
+					* flip force if close in - without branching within the inner loop 
+					*/
+					double multiplier = 1.0;
+					if (! (delta_r[k] >= Size))
+					{
+						multiplier = -1.0;
+						local_collisions++;
+					}
+
+					double gforce = multiplier * G * mass[i] * mass[j] * delta_pos[l][k] / pow(delta_r[k], 3.0);
+
+					f[l][i] = f[l][i] - gforce;
+					f[l][j] = f[l][j] + gforce;
+
+					k = k + 1;
+				}
+			}
+		}
+		// this is a kludge: the modified code results in 
+		// 3x as many collisions so we correct this here
+		collisions += local_collisions / 3;
+	\end{lstlisting}
+	\caption{Pairwise separation calculation with loops swapped.}
+	\label{figure:PairSwap}
+\end{figure}
+
+Two timing runs produced times of 50.109335 and 50.124341 seconds for 100 steps, for an average time of 0.501 seconds per step.
+This was a 22\% reduction in run time, suggesting that cache misses in the innermost of the three loops had been a significant factor due to stepping through the arrays by large increments.
+Overall reduction in program time was now 74\%.
 
 \subsection{Incrementing Pointers}
-\subsection{Incrementing Pointers 1}
+The next modification was to replace array accesses via indexing with access via incrementing pointers within the loops which calculated new particle positions and velocities in order to reduce arithmetic when accessing array elements.
+The resulting code for the position calculation is shown in Figure~\ref{figure:PInc}.
+A corresponding change was made to the velocity calculation.
+
+\begin{figure}
+	\begin{lstlisting}
+		double *pvel = vel[0];
+		double *pvel = vel[0]
+		for (j = 0; j < Ndim; j++)
+		{
+			for (i = 0; i < Nbody; i++)
+			{
+				// pos[j][i] = pos[j][i] + dt * vel[j][i];
+				*ppos += dt * *pvel;
+				++ppos;
+				++pvel;
+			}
+		}
+	\end{lstlisting}
+	\caption{Position update with incrementing pointers.}
+	\label{figure:PInc}
+\end{figure}
+
+The resulting code is less readable, as is often the case with optimisation.
+In this case there were additional variables required in order to store the current position in each array as well as more code to update the pointers.
+Modifying this code in future will therefore require more time to understand the code and more lines of code to be changed, with more opportunities for error or omission.
+
+Two runs with this modification produced times of 50.766400 and 51.394138 seconds for 100 steps, representing an average of 0.511 seconds per step.
+This was a small reduction in performance, which suggests that the compiler was already performing this optimisation and that the manual implementation was either less efficient or interfering with the compiler's efforts.
+
+As this modification reduced performance, it was discarded.
 
 \section{Future Work}
 
-Maintainability.
+There are several further modifications which may produce significant improvements in the program's performance.
+Several of these were identified during the initial examination of the code in Section~\ref{subsec:ExaminingTheCode} including more loops which could be swapped or combined, repeated calculations which could be removed, and storing related data in separate arrays in memory. 
 
-Readability.
+The most likely candidate for significant improvement is the arrangement of data in memory.
+Each calculation requiring elements of several different arrays might perform better if all of the elements with a given index were stored in a data structure and the entirety of the data stored in an array of these structures.
+This would improve data locality.
+However, this modification would be quite time-consuming as the arrays and all code which references them would have to be reworked in order to use the new data structure.
 
-Performance.
+It is also possible that loop tiling in the code which calculated the forces between pairs may improve performance as the {\em i} and {\em j} indices into the {\em mass} array started at similar values and moved to the value of {\em NBody}.  
 
-Data structures likely to be major culprit.
-Data structures - all items for one particle instead of all particles for one item - to improve data locality.  However, two simple arrays being accessed sequentially in different cache lines could be fine.
-Experiment with array sizes - is performance affected by powers of 2 in array sizes?  This would reveal caching problems.  
-Further work: try compiler flags again.
-Further work: loop tiling in the force calculation as mass[i] and mass[j] accessed together.
+It may be of value to test the program with various numbers of particles in order to see if cache conflicts are being caused by the number of particles being a power of 2.
 
+Finally, several sections of the code appear to be highly parallelisable; they iterate through arrays and update their elements with calculations which are independent of any other elements.
+However, the scope of this exercise did not include parallelising the code.
 
 \section{Conclusion}
-This section is the conclusion.
+
+The initial examination of the code identified many potential improvements.
+There was insufficient time for all of these, so those which were easiest to attempt were done first, bearing in mind that not all modifications were guaranteed to actually produce performance improvements.
+This was found to be the case as several modifications which were expected to improve performance actually worsened it, as in the case of replacing array indexing with incrementing pointers.
+
+The program's run time per step was reduced from 1.937 seconds to 0.501, representing a reduction of 74\%.
+If we define program speedup as 
+
+\begin{equation}
+S = T_{ref}/T
+\label{equation:speedup}
+\end{equation}
+
+...where ${T}$ is the program's current run time and $T_{ref}$ is the run time of the original code, we find that the final program speedup was 3.87.
+The program's performance could likely be improved further by a complete reworking of the code, rearranging the data structures to keep elements which were needed together in calculations close to each other in memory, and updating all of the calculation code to match the new data structures.
+This would however represent a much larger investment of time than the modifications which were attempted.
+
 
 \begin{thebibliography}{100}
 

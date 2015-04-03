@@ -1,3 +1,8 @@
+//  Performance Programming
+//  Coursework
+//  B063622
+
+
 /*
  *  Simple molecular dynamics code.
  *  $Id: MD-c.c,v 1.2 2002/01/31 16:43:14 spb Exp spb $
@@ -134,7 +139,7 @@ void evolve(int count, double dt)
 						multiplier = -1.0;
 						local_collisions++;
 					}
-					
+						
 					double gforce = multiplier * G * mass[i] * mass[j] * delta_pos[l][k] / pow(delta_r[k], 3.0);
 					
 					*pfli -= gforce;					
