@@ -502,12 +502,37 @@ However, this modification made performance worse; run times were 62.618063 and 
 It is not understood why the run times varied more than with other modifications.
 However, it is clear that performance was degraded, perhaps due to register pressure caused by having more expressions in a C statement.
 
-As this modification reduced performance, it was reverted.
+As this modification reduced performance, it was discarded.
 
 \subsection{Array Padding}
+The next modification was to pad the large data arrays used by the function.
+All of these arrays were multiples of large powers of 2, meaning their positions in memory were likely to be aligned on the same cache lines and that cache conflicts were likely to be a serious factor in the program's' performance.
+It was expected that padding the arrays by the size of a cache line (64 bytes on MORAR's AMD Opteron CPUs) in order to shift each consecutive array by one more cache line would enable an element at a given index in any one array to be accessed without causing the element at the same index in any other array to be flushed.
+A pad value was calculated in terms of the size of a double floating point number (as used in the arrays) and this was added to the size of the memory allocation for each array as shown in Figure~\ref{figure:Pad}.
 
+\begin{figure}
+	\begin{lstlisting}
+		/* calculate size in doubles of 1 line of AMD Opteron L3 cache */
+		int const cache_line = 64;
+		int const pad_doubles = 2 * cache_line / sizeof(double);
+
+		r = calloc(Nbody + pad_doubles, sizeof(double));
+		delta_r = calloc(Nbody * Nbody + pad_doubles, sizeof(double));
+
+		// ...
+	\end{lstlisting}
+	\caption{Central force calculation with loops swapped.}
+	\label{figure:Pad}
+\end{figure}
+
+Two timing runs of 100 steps each produced times of 63.811710 and 65.008981 seconds, for an average of 0.644 seconds per step.
+This represented an increase in the program's run time.
+It is not clear why this occurred; little or no change would have suggested that cache conflicts were not significantly affecting performance, but the reduction in performance is not well understood.
+
+As this modification reduced performance, it was discarded.
 
 \subsection{Loop Swap in Calculation of Pairwise Forces}
+
 \subsection{Incrementing Pointers}
 \subsection{Incrementing Pointers 1}
 
