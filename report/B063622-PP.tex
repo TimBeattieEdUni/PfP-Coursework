@@ -122,7 +122,7 @@ Several such possibilities were initially identified in the code and its make fi
 
 \subsection{Recording Initial Performance}
 An initial timing run was performed with the code and makefile unmodified.
-The only change made to the provided files was to modify the Sun Grid Engine batch script {\em bench\_c.sge} to allocate 64 for cores for each run as shown in Figure~\ref{fig:batchsge}.
+The only change made to the provided files was to modify the Sun Grid Engine batch script \textbf{bench\_c.sge} to allocate 64 cores for each run as shown in Figure~\ref{figure:batchsge}.
 This was done in order to isolate timing runs from the effects of any other programs running on the same node on MORAR.
 This setting was applied to all timing runs performed.
 
@@ -133,7 +133,7 @@ This setting was applied to all timing runs performed.
 		#$ -cwd
 	\end{lstlisting}
 	\caption{Modification to bench\_c.sge to allocate 64 cores for timing runs.}
-	\label{fig:batchsge}
+	\label{figure:batchsge}
 \end{figure}
 
 The program performed five iterations of 100 steps with each step including the running count of collisions and with each set of 100 steps indicating the time taken for that set.
@@ -158,6 +158,7 @@ Times for the initial run are shown in Table~\ref{table:InitialRunTimes}.
 \end{table}
 
 The initial timing was very consistent, resulting in an average of 1.937 seconds per step, with times for each set of 100 steps varying by less than one percent.
+Based on these timings, it was decided that only the first four figures were significant as the fourth digit is the first to show (small) variation between measurements.
 For this reason, two runs of 100 steps each were considered sufficient for timing the first few modifications to the code.
 It was anticipated that times might become less consistent when the program became more efficient as interruptions for I/O would affect the program more if it were keeping the CPU busy.
 However, run times remained consistent to within approximately three percent throughout the work done, so the number of timing runs for each modification was not increased.
@@ -174,7 +175,7 @@ A test tool was provided which compared the values in two output files and repor
 The tool had a bug: it failed to handle NaN values correctly.
 The code which performed the comparison between values reported a difference of 0.0 between any floating point number and NaN.
 A check for NaN values was added and the code was made to indicate that the difference between any valid value and NaN, or between two NaNs, was the largest available double-precision floating point value.
-The modified code is shown in Figure~\ref{fig:NanTest}.
+The modified code is shown in Figure~\ref{figure:NanTest}.
 
 \begin{figure}
 	\begin{lstlisting}
@@ -198,11 +199,10 @@ The modified code is shown in Figure~\ref{fig:NanTest}.
 		}
 	\end{lstlisting}
 	\caption{Checking for NaN values in diff tool.}
-	\label{fig:NanTest}
+	\label{figure:NanTest}
 \end{figure}
 
 \subsection{Input Data for Testing}
-
 In order to produce output which could be tested for accuracy by comparing it with output from previous runs, the set of particle starting positions and velocities provided as input to the program had to be the same for each test run.
 Additionally the program had to be run until collisions started to occur in order to verify that the collision count was correct.
 A run of 100 steps was considered sufficient for both timing and accuracy as molecular dynamics calculations are generally very sensitive to small perturbations after many iterations.  
@@ -233,11 +233,10 @@ Exceptions to this occurred when one modification enabled another - for example 
 The accuracy of the final positions and velocities was verified using the test program.
 The run time for 100 steps and the accuracy of the collision count were checked manually as this did not consume significant time.
 
-
 \subsection{Profiling}
 
 A profiling run was performed in order to gather information about the program's use of CPU time.
-The profiling build was created by cleaning the previous build and passing the necessary profiling flags to the compiler on the command line as shown in Figure~\ref{fig:ProfMake}.
+The profiling build was created by cleaning the previous build and passing the necessary profiling flags to the compiler on the command line as shown in Figure~\ref{figure:ProfMake}.
 
 \begin{figure}
 	\begin{lstlisting}
@@ -245,10 +244,10 @@ The profiling build was created by cleaning the previous build and passing the n
 		make CFLAGS="-g -pg"
 	\end{lstlisting}
 	\caption{Buildng with profiling enabled.}
-	\label{fig:ProfMake}
+	\label{figure:ProfMake}
 \end{figure}
 
-Output from the profiler is shown in Figure~\ref{fig:ProfOutput}.
+Output from the profiler is shown in Figure~\ref{figure:ProfOutput}.
 \begin{figure}
 	\begin{lstlisting}
 		Each sample counts as 0.01 seconds.
@@ -267,43 +266,231 @@ Output from the profiler is shown in Figure~\ref{fig:ProfOutput}.
 		0.00    363.90     0.00        2     0.00     0.00  second
 	\end{lstlisting}
 	\caption{Output from the profiler.}
-	\label{fig:ProfOutput}
+	\label{figure:ProfOutput}
 \end{figure}
 
-It can be seen that most of the program's time is spent in functions force() and evolve().
-This result is unsurprising as function evolve() contains all of the program's calculation loops, and force() is called repeatedly in the innermost of a set of three nested for loops which together iterate over the entire range of four of the program's large arrays.
+It can be seen that most of the program's time is spent in functions \textbf{force()} and \textbf{evolve()}.
+This result is unsurprising as function \textbf{evolve()} contains all of the program's calculation loops, and \textbf{force()} is called repeatedly in the innermost of a set of three nested for loops which together iterate over the entire range of four of the program's large arrays.
 
-As function evolve() contained several for loops, the option of placing each of these in a separate function in order to use the profiler to determine which were taking the most time was considered.
+As function \textbf{evolve()} contained several for loops, the option of placing each of these in a separate function in order to use the profiler to determine which were taking the most time was considered.
 However, there were already several clear possibilities for modifications (see Section~\ref{subsec:ExaminingTheCode}) which were expected to improve performance significantly, so this was reserved as an option for later if needed.
 
 \section{Modifications to the Code}
 
 \subsection{Removing Debug Symbols}
-First modification: remove -g flag.
-Debug symbols - increase size of code and reduces performance.
-107.066320s and 107.309783 
-Consistent timing found using 64 cores, so 2 runs enough.
-If runs varied, planned to increase number of runs.  Didn't vary.
+A quick and obvious modification to the program's makefile was to remove the \textbf{-g} flag from the CFLAGS variable as this adds debug symbols to the executable, increasing its size and degrading its performance.
+Two timing runs were performed with the flag removed, and the resulting times for 100 steps were 107.066320 and 107.309783 seconds.
+Taking the average of these times and comparing with the original value of 1.937 seconds per step, the reduction in run time was approximately 45\%.
+This was unsurprising as enabling debug information when compiling typically reduces performance significantly.
 
-\section{Compiler optimisation flags}
-Easy initial option: try adding compiler optimisation flags  O1-4 tried as well as–fast –Mipa=fast,inline  as recommended by th PGI Compiler User Guide. \cite{ref:PgiCC}  "If you want to get started quickly with optimization, a good set of options to use with any of the PGI compilers is -fast -Mipa=fast,inline."
-O1: (only 1 run) 125.075299
-O2: 127.319100
-O3: 127.375565 127.023777
-O4: 125.678674 125.906789
--fast -Mipa=fast,inline: 
-Found that all optimisation flags actually increased run time.  Clear that compiler optimisation not a limiting factor in current code.
-Left -fast -Mipa=fast,inline in place as expected to solve other problems - compiler optimisation flags generally make an improvement.
+\subsection{Compiler Optimisation Flags}
+A second quick modification was to apply compiler optimisation flags in the program's makefile.
+Flags \textbf{-O1} to \textbf{-O4} were tried as well as \textbf{-fast -Mipa=fast,inline}  as recommended by th PGI Compiler User Guide. \cite{ref:PgiCC}
+Results are shown in Table~\ref{table:OptFlags}.
+
+\begin{table}[h]
+	\begin{center}
+		\begin{tabular}{||l|c|l||}
+			\hline
+			{\bf Flags} & {\bf Time 1} & {\bf Time 2}\\
+			\hline
+				O1  &  125.075299  &  (n/a)\\
+				O2  &  127.319100  &  (n/a)\\ 
+				O3  &  127.375565  &  127.023777\\
+				O4  &  125.678674  &  125.906789\\
+				-fast -Mipa=fast,inline  &  95.240342  &  95.159813\\
+			\hline
+		\end{tabular}
+	\end{center}
+	\caption{Run times with various compiler optimisations enabled.}
+	\label{table:OptFlags}
+\end{table}
+
+A single run was done for each of \textbf{-O1} and \textbf{-O2} as these were not expected to significantly improve the program's 'run time.  
+In fact both were found to increase run time.
+Two runs were done for each of \textbf{-O3} and \textbf{-O4}, and these also increased run time.
+Two runs were done with \textbf{-fast –Mipa=fast,inline} and this was found to reduce run time by 11\% from the previous run time, representing a reduction of 51\% in run time from the original build of the program.
+
+The compiler flags were therefore left as \textbf{-fast -Mipa=fast,inline} for subsequent modifications.
+
+\subsection{Loop Swap in Calculation of Pairwise Separation}
+The next modification was a loop swap in the program's calculation of distances between particles.
+In the original code shown in Figure~\ref{figure:PairSepOrig} this was done with a set of three nested \textbf{for} loops with the slowest-moving index {\em l} in the innermost loop.
+
+\begin{figure}
+	\begin{lstlisting}
+		/* calculate pairwise separation of particles */
+		k = 0;
+		for (i = 0; i < Nbody; i++)
+		{
+			for (j = i + 1; j < Nbody; j++)
+			{
+				for (l = 0; l < Ndim; l++)
+				{
+					delta_pos[l][k] = pos[l][i] - pos[l][j];
+				}
+				k = k + 1;
+			}
+		}
+	\end{lstlisting}
+	\caption{Original code with slowest index in innermost loop.}
+	\label{figure:PairSepOrig}
+\end{figure}
+
+The innermost loop was moved to the outermost position and the initialisation and incrementing of variable {\em k} were moved to new positions.
+The modified code is shown in Figure~\ref{figure:PairSepMod}.
+
+\begin{figure}
+	\begin{lstlisting}
+		/* calculate pairwise separation of particles */
+		for (l = 0; l < Ndim; l++)
+		{
+			k = 0;
+			for (i = 0; i < Nbody; i++)
+			{
+				for (j = i + 1; j < Nbody; j++)
+				{
+					delta_pos[l][k] = pos[l][i] - pos[l][j];
+					k = k + 1;
+				}
+			}
+		}
+	\end{lstlisting}
+	\caption{Modified code with slowest index in outermost loop.}
+	\label{figure:PairSepMod}
+\end{figure}
+
+Two timing runs of 100 steps produced times of 65.047681 and 65.043864 seconds, representing an average time per step of 0.650 seconds.
+This represents a reduction in run time of 32\% over the previous code and a reduction of 66\% from the original program.
+
+\subsection{Removal of Repeated Calculations}
+The next modification was to remove two repeated calculations of the product of the gravitational constant and the masses of two particles in the calculation of the forces between pairs of particles.
+The original code shown in Figure~\ref{figure:GmmOrig} calculates \textbf{G * mass[i] * mass[j]} twice unnecessarily.
+
+This was taking place inside three nested for loops with the slowest-moving index in the innermost loop, and it was recognised that it would be beneficial to swap these loops in order to improve performance.
+However, the original code was complicated enough that doing this took several attempts, and in order to make at least some progress it was decided to make other modifications were made in the meantime.
+
+The code was modified to remove the repeated calculation, and this is shown in Figure~\ref{figure:GmmMod}
+Two timing runs were performed resulting in times of 63.584596 and 63.588328 seconds for 100 steps for an average of 0.636 seconds per step.
+This represents a rather small improvement of 2\% over the previous run time and 67\% over the original run time.
+From this we conclude that while the extra calculations were making at least some difference, they were not a major limiting factor in the code's performance.
+
+\begin{figure}
+	\begin{lstlisting}
+		/*  flip force if close in */
+		if (delta_r[k] >= Size)
+		{
+			f[l][i] = f[l][i] -
+				  force(G * mass[i] * mass[j], delta_pos[l][k], delta_r[k]);
+			f[l][j] = f[l][j] +
+				  force(G * mass[i] * mass[j], delta_pos[l][k], delta_r[k]);
+		}
+	\end{lstlisting}
+	\caption{Modified code with slowest index in outermost loop.}
+	\label{figure:GmmOrig}
+\end{figure}
+
+\begin{figure}
+	\begin{lstlisting}
+		double Gmm = G * mass[i] * mass[j];
+		/*  flip force if close in */
+		if (delta_r[k] >= Size)
+		{
+			f[l][i] = f[l][i] - force(Gmm, delta_pos[l][k], delta_r[k]);
+			f[l][j] = f[l][j] + force(Gmm, delta_pos[l][k], delta_r[k]);
+		}
+	\end{lstlisting}
+	\caption{Modified code without repeated calculations.}
+	\label{figure:GmmMod}
+\end{figure}
+
+\subsection{Removal of Repeated Function Calls}
+The next modification removed the repeated calls to function \textbf{force()} in the same loop as above.
+Figure~\ref{figure:ForceMod} shows the replacement of two calls to this function with a single call which stores the result.
+
+\begin{figure}
+	\begin{lstlisting}
+		double Gmm = G * mass[i] * mass[j];
+		double gforce = force(Gmm, delta_pos[l][k], delta_r[k]);
+		/*  flip force if close in */
+		if (delta_r[k] >= Size)
+		{
+			f[l][i] = f[l][i] - gforce;
+			f[l][j] = f[l][j] + gforce;
+		}
+	\end{lstlisting}
+	\caption{Modified code with only a single call to \textbf{force()}.}
+	\label{figure:ForceMod}
+\end{figure}
+
+Two timing runs produced times of 60.736962 and 60.985466 seconds for an average of 0.609 seconds per step.
+This represents a reduction in run time of 4\% over the previous modification and 69\% overall.
+Again, the small difference suggests this was not a major limiting factor in the code's performance.
+
+\subsection{Loop Swap in Calculation of Central Force}
+The next modification was a simple loop swap in the calculation of the force between each particle and the central mass.
+The outermost loop contained the fastest-moving index, {\em i}, and this was moved to the innermost loop as shown in Figures \ref{figure:CfOrig} and \ref{figure:CfMod}
+
+\begin{figure}
+	\begin{lstlisting}
+		/* calculate central force */
+		for (i = 0; i < Nbody; i++)
+		{
+			for (l = 0; l < Ndim; l++)
+			{
+				f[l][i] = f[l][i] - force(G * mass[i] * M_central, pos[l][i], r[i]);
+			}
+		}
+	\end{lstlisting}
+	\caption{Original central force calculation.}
+	\label{figure:CfOrig}
+\end{figure}
+
+\begin{figure}
+	\begin{lstlisting}
+		/* calculate central force */
+		for (l = 0; l < Ndim; l++)
+		{
+			for (i = 0; i < Nbody; i++)
+			{
+				f[l][i] = f[l][i] - force(G * mass[i] * M_central, pos[l][i], r[i]);
+			}
+		}
+	\end{lstlisting}
+	\caption{Central force calculation with loops swapped.}
+	\label{figure:CfMod}
+\end{figure}
+
+Two timing runs produced times of 60.619624 and 60.683955 seconds for 100 steps, representing an average of .607 seconds per step.
+This was an reduction in run time of 0.3\% over the previous modification and a 69\% improvement overall.
+It was concluded that while the loop swap probably improved the efficiency of that part of the program, other factors elsewhere in the code were still dominant.
+
+The inner loop in this code also contains a repeated calculation of a loop invariant: \textbf{G * M\_central}.
+This could have been replaced with a constant calculated outside the loop, however there was insufficient time after other modifications had been implemented.
+
+\subsection{Loop Swap in Calculation of Positions}
+
+\subsection{Loop Swap in Calculation of Velocities}
+\subsection{Reduced Function Calls}
+\subsection{Array Padding}
+\subsection{Loop Swap in Calculation of Pairwise Forces}
+\subsection{Incrementing Pointers}
+\subsection{Incrementing Pointers 1}
 
 \section{Future Work}
-
-\section{Recommendations}
 
 Maintainability.
 
 Readability.
 
 Performance.
+
+Data structures likely to be major culprit.
+Data structures - all items for one particle instead of all particles for one item - to improve data locality.  However, two simple arrays being accessed sequentially in different cache lines could be fine.
+Experiment with array sizes - is performance affected by powers of 2 in array sizes?  This would reveal caching problems.  
+Further work: try compiler flags again.
+Further work: loop tiling in the force calculation as mass[i] and mass[j] accessed together.
+
 
 \section{Conclusion}
 This section is the conclusion.
