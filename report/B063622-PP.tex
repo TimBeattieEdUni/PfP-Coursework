@@ -468,11 +468,45 @@ It was concluded that while the loop swap probably improved the efficiency of th
 The inner loop in this code also contains a repeated calculation of a loop invariant: \textbf{G * M\_central}.
 This could have been replaced with a constant calculated outside the loop, however there was insufficient time after other modifications had been implemented.
 
-\subsection{Loop Swap in Calculation of Positions}
+\subsection{Loop Swaps in Calculations of Positions and Velocities}
+In the same manner as the previous modification, two loop swaps were performed on the code which calculated the new positions and velocities of the particles.
+As in the previous modifications, the inner loops were iterating over the slowest-moving indices, and both loops were swapped so that the fastest-moving indices were used in the inner loops. 
 
-\subsection{Loop Swap in Calculation of Velocities}
+Swapping loops in the position calculation produced run times of 59.966728 and 60.041090 seconds for an average of 0.600 seconds per step.
+This represented a 1\% reduction over the previous run time, with overall reduction still at 69\%.
+
+Swapping loops in the velocity calculation produced run times of 59.894412 and 59.977946 seconds for an average of 0.599 seconds per step.
+This represented a reduction of less than 1\% over the previous run time, with overall reduction still at 69\%.
+
+From this it is clear that these loop swaps were not a significant limiting factor in the code's performance.
+
 \subsection{Reduced Function Calls}
+The next modification was to inline a call to function \textbf{force()} in the addition of forces between pairs.
+As this function was called once for every particle in the system, it was expected that removing this function call overhead would improve the performance of the loop.
+The modification is shown in Figure~\ref{figure:CallMod} with the earlier code commented out.
+
+\begin{figure}
+	\begin{lstlisting}
+		// before: function call in inner loop
+		// double Gmm = G * mass[i] * mass[j];
+		// double gforce = force(Gmm, delta_pos[l][k], delta_r[k]);
+
+		// after: function call inlined
+		double gforce = G * mass[i] * mass[j] * delta_pos[l][k] / pow(delta_r[k], 3.0);
+	\end{lstlisting}
+	\caption{Central force calculation with loops swapped.}
+	\label{figure:CallMod}
+\end{figure}
+
+However, this modification made performance worse; run times were 62.618063 and 67.672446 seconds, for an average of 0.651 seconds per step.
+It is not understood why the run times varied more than with other modifications.
+However, it is clear that performance was degraded, perhaps due to register pressure caused by having more expressions in a C statement.
+
+As this modification reduced performance, it was reverted.
+
 \subsection{Array Padding}
+
+
 \subsection{Loop Swap in Calculation of Pairwise Forces}
 \subsection{Incrementing Pointers}
 \subsection{Incrementing Pointers 1}
