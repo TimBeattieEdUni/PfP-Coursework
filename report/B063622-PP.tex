@@ -101,6 +101,8 @@ The code was provided in both C and Fortran; the C version was chosen for this e
 \section{First Steps}
 
 \subsection{Examining the Code}
+\label{subsec:ExaminingTheCode}
+
 The first step was to study the code and its build process in order to gain an understanding of how the code worked and to identify potential modifications which might improve performance.
 Several such possibilities were initially identified in the code and its make file:
 
@@ -199,7 +201,7 @@ The modified code is shown in Figure~\ref{fig:NanTest}.
 	\label{fig:NanTest}
 \end{figure}
 
-\section{Test Input Data}
+\subsection{Input Data for Testing}
 
 In order to produce output which could be tested for accuracy by comparing it with output from previous runs, the set of particle starting positions and velocities provided as input to the program had to be the same for each test run.
 Additionally the program had to be run until collisions started to occur in order to verify that the collision count was correct.
@@ -213,7 +215,7 @@ The program's output to stdout was compared manually to verify that the number o
 A small difference in the number of collisions would have been acceptable in the same way as small differences in particle positions and velocities.
 However, the number of collisions at 100 steps when starting with the selected input data was always 34107; this did not change throughout the exercise.
 
-\section{Work Process}
+\subsection{Work Process}
 Each modification to the program was performed in the following steps:
 
 \begin{enumerate}
@@ -231,14 +233,57 @@ Exceptions to this occurred when one modification enabled another - for example 
 The accuracy of the final positions and velocities was verified using the test program.
 The run time for 100 steps and the accuracy of the collision count were checked manually as this did not consume significant time.
 
-\section{Initial Steps}
+
+\subsection{Profiling}
+
+A profiling run was performed in order to gather information about the program's use of CPU time.
+The profiling build was created by cleaning the previous build and passing the necessary profiling flags to the compiler on the command line as shown in Figure~\ref{fig:ProfMake}.
+
+\begin{figure}
+	\begin{lstlisting}
+		make clean
+		make CFLAGS="-g -pg"
+	\end{lstlisting}
+	\caption{Buildng with profiling enabled.}
+	\label{fig:ProfMake}
+\end{figure}
+
+Output from the profiler is shown in Figure~\ref{fig:ProfOutput}.
+\begin{figure}
+	\begin{lstlisting}
+		Each sample counts as 0.01 seconds.
+		%   cumulative   self              self     total           
+		time   seconds   seconds    calls   s/call   s/call  name    
+		32.64    118.78   118.78                             _mcount2
+		30.92    231.31   112.53 5033164800     0.00     0.00  force
+		28.79    336.08   104.78        1   104.78   233.59  evolve
+		4.46    352.31    16.23      600     0.03     0.03  add_norm
+		2.48    361.33     9.02                             __forceEND
+		0.52    363.23     1.89                             _mp_preinit
+		0.17    363.83     0.60                             __rouinit
+		0.01    363.86     0.03      300     0.00     0.00  visc_force
+		0.01    363.88     0.02      300     0.00     0.00  wind_force
+		0.01    363.90     0.02                             __rouexit
+		0.00    363.90     0.00        2     0.00     0.00  second
+	\end{lstlisting}
+	\caption{Output from the profiler.}
+	\label{fig:ProfOutput}
+\end{figure}
+
+It can be seen that most of the program's time is spent in functions force() and evolve().
+This result is unsurprising as function evolve() contains all of the program's calculation loops, and force() is called repeatedly in the innermost of a set of three nested for loops which together iterate over the entire range of four of the program's large arrays.
+
+As function evolve() contained several for loops, the option of placing each of these in a separate function in order to use the profiler to determine which were taking the most time was considered.
+However, there were already several clear possibilities for modifications (see Section~\ref{subsec:ExaminingTheCode}) which were expected to improve performance significantly, so this was reserved as an option for later if needed.
+
+\section{Modifications to the Code}
+
+\subsection{Removing Debug Symbols}
 First modification: remove -g flag.
 Debug symbols - increase size of code and reduces performance.
 107.066320s and 107.309783 
 Consistent timing found using 64 cores, so 2 runs enough.
 If runs varied, planned to increase number of runs.  Didn't vary.
-
-Profiling run done, but unsurprisinbly all time spent in function evolve() as it contained all the loops.  Could have separated loops into functions, but obvious candidates (3-nested fors) so worked on them.
 
 \section{Compiler optimisation flags}
 Easy initial option: try adding compiler optimisation flags  O1-4 tried as well as–fast –Mipa=fast,inline  as recommended by th PGI Compiler User Guide. \cite{ref:PgiCC}  "If you want to get started quickly with optimization, a good set of options to use with any of the PGI compilers is -fast -Mipa=fast,inline."
@@ -249,6 +294,16 @@ O4: 125.678674 125.906789
 -fast -Mipa=fast,inline: 
 Found that all optimisation flags actually increased run time.  Clear that compiler optimisation not a limiting factor in current code.
 Left -fast -Mipa=fast,inline in place as expected to solve other problems - compiler optimisation flags generally make an improvement.
+
+\section{Future Work}
+
+\section{Recommendations}
+
+Maintainability.
+
+Readability.
+
+Performance.
 
 \section{Conclusion}
 This section is the conclusion.
